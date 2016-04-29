@@ -5,10 +5,35 @@ from lex import tokens
 
 DEBUG = True
 
+# (let (a 3) (+ 1 a))
 # Namespace & built-in functions
 
 name = {}
 let_dict = {}
+
+def let(l):
+    if len(let_dict.keys()) > 0:
+        for i in let_dict:
+            for j in range(len(let_dict[i])):
+                if (let_dict[i])[j] in l[0]:
+                    (let_dict[i])[j] = l[0][1]
+            l[0].append(lisp_eval(i, let_dict[i]))
+        val = l[0][-1]
+        let_dict.clear()
+        return val
+    val = l[0][1]
+    let_dict.clear()
+    return val
+
+name['let'] = let
+
+def _if(l):
+    if l[0] == True:
+        print l[1]
+    else:
+        print l[2]
+
+name['if'] = _if
 
 def cons(l):
     return [l[0]] + l[1]
@@ -58,7 +83,10 @@ def cond(l):
 name['cond'] = cond
 
 def add(l):
-    return sum(l)
+    if not (isinstance(l[0], int)) or not (isinstance(l[1], int)):
+        let_dict["+"] = l
+    else:
+        return sum(l)
 
 name['+'] = add
 
@@ -67,6 +95,14 @@ def minus(l):
     return -l[0]
 
 name['-'] = minus
+
+def mult(l):
+    if not (isinstance(l[0], int)) or not (isinstance(l[1], int)):
+        let_dict["*"] = l
+    else:
+        return l[0] * l[1]
+
+name["*"] = mult
 
 def _print(l):
     print lisp_str(l[0])
@@ -179,8 +215,7 @@ def p_item_empty(p):
 def p_call(p):
     'call : LPAREN SIMB items RPAREN'
     if DEBUG: print "Calling", p[2], "with", p[3]
-    print "This is a SIMB: ", p[2]
-    p[0] = lisp_eval(p[2], p[3])   
+    p[0] = lisp_eval(p[2], p[3])
 
 def p_atom_simbol(p):
     'atom : SIMB'
